@@ -11,7 +11,7 @@
 
 This project decodes the 2,500-year-old **Aṣṭādhyāyī** as the world's first **Deterministic Generative AI**.
 
-Pāṇini's grammar is not a mere set of rules; it is a **Turing-Complete Machine** that generates infinite valid Sanskrit words from finite roots using a highly compressed, algebraic source code. `panini-nlp` implements this architecture:
+Pāṇini's grammar is not a mere set of rules; it is a **formal generative system** that produces infinite valid Sanskrit words from finite roots using a highly compressed, algebraic source code. `panini-nlp` implements this architecture:
 1.  **Universal Registry**: A digital structural map of all 3,996 Sūtras and ~2,000 Dhātus.
 2.  **Deterministic Engine**: Mathematical implementation of Sandhi (phonetics) and Chandas (prosody).
 3.  **Neuro-Symbolic Bridge**: A GNN layer to handle ambiguity (Vipratisedha) where the deterministic path branches.
