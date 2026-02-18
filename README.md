@@ -4,7 +4,20 @@
 
 [![](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
+
 `panini-nlp` is a Python library that decodes the **Aṣṭādhyāyī** not as a static text, but as a computable **Cyclic Directed Graph**. It provides the complete structural context of the grammar—every Sūtra and Dhātu—alongside deterministic engines for Sandhi, Prosody, and Phonetics.
+
+## 📖 About
+
+This project decodes the 2,500-year-old **Aṣṭādhyāyī** as the world's first **Deterministic Generative AI**.
+
+Pāṇini's grammar is not a mere set of rules; it is a **Turing-Complete Machine** that generates infinite valid Sanskrit words from finite roots using a highly compressed, algebraic source code. `panini-nlp` implements this architecture:
+1.  **Universal Registry**: A digital structural map of all 3,996 Sūtras and ~2,000 Dhātus.
+2.  **Deterministic Engine**: Mathematical implementation of Sandhi (phonetics) and Chandas (prosody).
+3.  **Neuro-Symbolic Bridge**: A GNN layer to handle ambiguity (Vipratisedha) where the deterministic path branches.
+
+We are not inventing AI for Sanskrit; we are decoding the algorithm that was already written.
+
 
 ---
 
