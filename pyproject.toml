@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panini-nlp"
+version = "0.1.0"
+description = "Sanskrit NLP library grounded in Pāṇinian grammar. Deterministic, Graph-based, and Neuro-symbolic."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Sai Rohit", email = "akulasairohit@gmail.com"},
+]
+keywords = ["sanskrit", "nlp", "panini", "grammar", "gnn", "sandhi", "morphology", "ashtadhyayi", "dhatupatha"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Natural Language :: Sanskrit",
+]
+
+[project.optional-dependencies]
+compression = ["msgpack>=1.0"]
+gnn = ["torch>=2.0", "torch_geometric>=2.3", "networkx>=3.0"]
+all = ["msgpack>=1.0", "torch>=2.0", "torch_geometric>=2.3", "networkx>=3.0"]
+
+[project.urls]
+Repository = "https://github.com/meru-os/panini-nlp"
+
+[tool.setuptools.packages.find]
+include = ["panini_nlp*"]
+
+[tool.setuptools.package-data]
+"panini_nlp.data" = ["*.txt"]
+"panini_nlp.models" = ["*.pth", "*.pt", "*.bin"]
