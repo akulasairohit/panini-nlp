@@ -1,0 +1,14 @@
+
+[all]
+msgpack>=1.0
+torch>=2.0
+torch_geometric>=2.3
+networkx>=3.0
+
+[compression]
+msgpack>=1.0
+
+[gnn]
+torch>=2.0
+torch_geometric>=2.3
+networkx>=3.0

@@ -13,6 +13,11 @@ Both forward application (combine two terms) and reverse explanation
 
 from dataclasses import dataclass
 from typing import List, Optional
+from .sounds import (
+    Phoneme, A, AA, I, II, U, UU, R, RR, L, E, AI, O, AU,
+    YA, VA, RA, LA, AC
+)
+from .text.processing import decompose, recompose
 
 __all__ = ["Sutra", "SandhiResult", "SandhiEngine"]
 
@@ -55,91 +60,126 @@ def _rule(rid: str) -> Sutra:
 class SandhiEngine:
     """
     Deterministic engine implementing Pāṇinian Sandhi rules.
+    v0.2: Uses Phoneme processing (Varna-Vibhasha).
 
     >>> engine = SandhiEngine()
-    >>> engine.apply("देव", "ईश्वरः").modified
-    'देवेश्वरः'
+    >>> engine.apply("देव", "आलय").modified
+    'देवालय'
     """
-
-    # ── vowel sets (Devanāgarī) ──────────────────────────────────────────────
-    _A  = frozenset("अआ")
-    _I  = frozenset("इई")
-    _U  = frozenset("उऊ")
-    _R  = frozenset("ऋॠ")
-    _L  = frozenset(("ऌ",))
-    _E  = frozenset("ए")
-    _AI = frozenset("ऐ")
-    _O  = frozenset("ओ")
-    _AU = frozenset("औ")
-    _ALL_VOWELS = _A | _I | _U | _R | _L | _E | _AI | _O | _AU
 
     def __init__(self) -> None:
         self.rules = list(_RULES)
+        
+        # Precompute sets for pratyaharas
+        self.AK = {A.symbol, AA.symbol, I.symbol, II.symbol, U.symbol, UU.symbol, R.symbol, RR.symbol, L.symbol}
+        self.IK = {I.symbol, II.symbol, U.symbol, UU.symbol, R.symbol, RR.symbol, L.symbol}
+        self.AC = AC # From sounds.py
+        
+        # Mapping for Yan Sandhi replacement (Ik -> Yan)
+        # i/I -> y, u/U -> v, r/R -> r, l -> l
+        self.YAN_MAP = {
+            I.symbol: YA, II.symbol: YA,
+            U.symbol: VA, UU.symbol: VA,
+            R.symbol: RA, RR.symbol: RA,
+            L.symbol: LA
+        }
 
     # ── public API ───────────────────────────────────────────────────────────
 
     def apply(self, term1: str, term2: str) -> SandhiResult:
-        """Combine two Devanāgarī terms applying the highest-priority Sandhi."""
+        """Combine two terms applying the highest-priority Sandhi."""
         t1 = term1.strip()
         t2 = term2.strip()
         if not t1 or not t2:
             return SandhiResult(f"{t1} + {t2}", f"{t1}{t2}", None, 1.0)
+            
+        # 1. Decompose into Phonemes
+        p1 = decompose(t1)
+        p2 = decompose(t2)
+        
+        if not p1 or not p2:
+            return SandhiResult(f"{t1} + {t2}", f"{t1}{t2}", None, 1.0)
 
-        last = t1[-1]
-        first = t2[0]
+        last = p1[-1]
+        first = p2[0]
+        
+        # Logic is easier to read with symbols
+        L_sym = last.symbol
+        F_sym = first.symbol
+        
+        # Check Rules in Priority Order (simplified for now)
 
-        # 6.1.101 — savarṇa dīrgha: a+a→ā, i+i→ī, u+u→ū
-        if last in self._A and first in self._A:
-            return self._result(t1, t2, t1[:-1] + "आ" + t2[1:], "6.1.101")
-        if last in self._I and first in self._I:
-            return self._result(t1, t2, t1[:-1] + "ई" + t2[1:], "6.1.101")
-        if last in self._U and first in self._U:
-            return self._result(t1, t2, t1[:-1] + "ऊ" + t2[1:], "6.1.101")
-        if last in self._R and first in self._R:
-            return self._result(t1, t2, t1[:-1] + "ॠ" + t2[1:], "6.1.101")
+        # 6.1.101 — Savarṇa Dīrgha (Akah Savarne Dirghah)
+        # Condition: Ak + Savarna (Similar Vowel) -> Dirgha
+        # Savarna: Same place of articulation.
+        if last.is_vowel and first.is_vowel:
+            if last.place == first.place and L_sym in self.AK:
+                # Merge into Long Vowel
+                replacement = None
+                if L_sym in {A.symbol, AA.symbol}: replacement = AA
+                elif L_sym in {I.symbol, II.symbol}: replacement = II
+                elif L_sym in {U.symbol, UU.symbol}: replacement = UU
+                elif L_sym in {R.symbol, RR.symbol}: replacement = RR
+                # L usually doesn't have long form in classic, but theoretical
+                
+                if replacement:
+                    new_phonemes = p1[:-1] + [replacement] + p2[1:]
+                    return self._result(t1, t2, new_phonemes, "6.1.101")
 
-        # 6.1.88 — vṛddhi: a/ā + e→ai, a/ā + o→au
-        if last in self._A and first in self._E:
-            return self._result(t1, t2, t1[:-1] + "ऐ" + t2[1:], "6.1.88")
-        if last in self._A and first in self._O:
-            return self._result(t1, t2, t1[:-1] + "औ" + t2[1:], "6.1.88")
+        # 6.1.88 — Vṛddhi (Vrddhir Eci)
+        # Condition: A/AA + Ec (e, o, ai, au) -> Vrddhi (ai, au)
+        # Note: Standard sutra says "Eci" (e, o, ai, au).
+        if L_sym in {A.symbol, AA.symbol} and first.is_vowel:
+             replacement = None
+             if F_sym in {E.symbol, AI.symbol}: replacement = AI
+             elif F_sym in {O.symbol, AU.symbol}: replacement = AU
+             
+             if replacement:
+                 new_phonemes = p1[:-1] + [replacement] + p2[1:]
+                 return self._result(t1, t2, new_phonemes, "6.1.88")
 
-        # 6.1.87 — guṇa: a/ā + i/ī→e, a/ā + u/ū→o, a/ā + ṛ→ar
-        if last in self._A and first in self._I:
-            return self._result(t1, t2, t1[:-1] + "ए" + t2[1:], "6.1.87")
-        if last in self._A and first in self._U:
-            return self._result(t1, t2, t1[:-1] + "ओ" + t2[1:], "6.1.87")
-        if last in self._A and first in self._R:
-            return self._result(t1, t2, t1[:-1] + "अर्" + t2[1:], "6.1.87")
-        if last in self._A and first in self._L:
-            return self._result(t1, t2, t1[:-1] + "अल्" + t2[1:], "6.1.87")
+        # 6.1.87 — Guṇa (Ad Gunah)
+        # Condition: A/AA + Ac (simple vowels mostly, but exceptions covered by Vrddhi)
+        # A + I -> E, A + U -> O, A + R -> Ar, A + L -> Al
+        if L_sym in {A.symbol, AA.symbol} and first.is_vowel:
+             replacement = []
+             if F_sym in {I.symbol, II.symbol}: replacement = [E]
+             elif F_sym in {U.symbol, UU.symbol}: replacement = [O]
+             elif F_sym in {R.symbol, RR.symbol}: replacement = [A, RA] # Ar
+             elif F_sym in {L.symbol}: replacement = [A, LA] # Al
+             
+             if replacement:
+                 new_phonemes = p1[:-1] + replacement + p2[1:]
+                 return self._result(t1, t2, new_phonemes, "6.1.87")
 
-        # 6.1.77 — yaṇ: i/ī + dissimilar vowel → y, u/ū→v, ṛ/ṝ→r, ḷ→l
-        if last in self._I and first in (self._ALL_VOWELS - self._I):
-            return self._result(t1, t2, t1[:-1] + "य्" + t2, "6.1.77")
-        if last in self._U and first in (self._ALL_VOWELS - self._U):
-            return self._result(t1, t2, t1[:-1] + "व्" + t2, "6.1.77")
-        if last in self._R and first in (self._ALL_VOWELS - self._R):
-            return self._result(t1, t2, t1[:-1] + "र्" + t2, "6.1.77")
+        # 6.1.77 — Yaṇ (Iko Yanaci)
+        # Condition: Ik + Ac (dissimilar) -> Yan
+        if L_sym in self.IK and first.is_vowel:
+            # Check dissimilarity (simplified: not same place)
+            # Actually Savarna Dirgha (6.1.101) is an exception to Yan.
+            # Since we checked 6.1.101 first, we are safe to apply Yan if 101 didn't match.
+            # (In Panini, Paratvat (later rule) applies, but 6.1.101 is later than 6.1.77 so it wins anyway).
+            
+            if L_sym in self.YAN_MAP:
+                yan = self.YAN_MAP[L_sym]
+                new_phonemes = p1[:-1] + [yan] + p2 # Keep the following vowel!
+                return self._result(t1, t2, new_phonemes, "6.1.77")
 
         # No applicable rule
         return SandhiResult(f"{t1} + {t2}", f"{t1} {t2}", None, 0.0)
 
     def explain(self, text: str) -> List[str]:
-        """Heuristic reverse-engineering: spot likely Sandhi in existing text."""
+        """Heuristic reverse-engineering."""
+        # TODO: Upgrade to phoneme based explanation
         explanations: List[str] = []
-        if "्य" in text:
-            explanations.append(
-                "Possible Yaṇ Sandhi (6.1.77): 'y' may derive from i/ī + vowel")
+        if "्य" in text or "्व" in text:
+             explanations.append("Possible Yaṇ Sandhi (6.1.77)")
         if "े" in text or "ो" in text:
-            explanations.append(
-                "Possible Guṇa Sandhi (6.1.87): 'e'/'o' may derive from a/ā + i/u")
+             explanations.append("Possible Guṇa Sandhi (6.1.87)")
         if "ै" in text or "ौ" in text:
-            explanations.append(
-                "Possible Vṛddhi Sandhi (6.1.88): 'ai'/'au' may derive from a/ā + e/o")
+             explanations.append("Possible Vṛddhi Sandhi (6.1.88)")
         if "ा" in text or "ी" in text or "ू" in text:
-            explanations.append(
-                "Possible Savarṇa Dīrgha (6.1.101): long vowel may derive from two similar vowels")
+             explanations.append("Possible Savarṇa Dīrgha (6.1.101)")
         return explanations
 
     def list_rules(self) -> List[Sutra]:
@@ -148,7 +188,8 @@ class SandhiEngine:
 
     # ── helpers ──────────────────────────────────────────────────────────────
 
-    def _result(self, t1: str, t2: str, combined: str, rid: str) -> SandhiResult:
+    def _result(self, t1: str, t2: str, phonemes: List[Phoneme], rid: str) -> SandhiResult:
+        combined = recompose(phonemes)
         return SandhiResult(
             original=f"{t1} + {t2}",
             modified=combined,

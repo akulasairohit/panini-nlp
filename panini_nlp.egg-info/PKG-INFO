@@ -1,3 +1,35 @@
+Metadata-Version: 2.4
+Name: panini-nlp
+Version: 0.1.0
+Summary: Sanskrit NLP library grounded in Pāṇinian grammar. Deterministic, Graph-based, and Neuro-symbolic.
+Author-email: Sai Rohit <akulasairohit@gmail.com>
+License: MIT
+Project-URL: Repository, https://github.com/meru-os/panini-nlp
+Keywords: sanskrit,nlp,panini,grammar,gnn,sandhi,morphology,ashtadhyayi,dhatupatha
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Text Processing :: Linguistic
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Provides-Extra: compression
+Requires-Dist: msgpack>=1.0; extra == "compression"
+Provides-Extra: gnn
+Requires-Dist: torch>=2.0; extra == "gnn"
+Requires-Dist: torch_geometric>=2.3; extra == "gnn"
+Requires-Dist: networkx>=3.0; extra == "gnn"
+Provides-Extra: all
+Requires-Dist: msgpack>=1.0; extra == "all"
+Requires-Dist: torch>=2.0; extra == "all"
+Requires-Dist: torch_geometric>=2.3; extra == "all"
+Requires-Dist: networkx>=3.0; extra == "all"
+
 # Panini-NLP
 
 **A Deterministic, Graph-based, Neuro-symbolic implementation of Pāṇini's Grammar.**
@@ -55,16 +87,16 @@ pip install .[gnn]
 
 ## 🛠️ Usage Examples
 
-### 1. Deterministic Sandhi (Phonetic Engine v0.2)
-Apply formal rules like *Akaḥ Savarṇe Dīrghaḥ* (6.1.101). The engine uses **Varna-Vibhasha** (Phoneme Decomposition) to handle Devanagari input correctly.
+### 1. Deterministic Sandhi
+Apply formal rules like *Akaḥ Savarṇe Dīrghaḥ* (6.1.101).
 
 ```python
 from panini_nlp import SandhiEngine
 
 sandhi = SandhiEngine()
-result = sandhi.apply("देव", "आलय")
-print(result.modified) 
-# Output: देवालय (Devalaya) - Rule 6.1.101 applied
+result = sandhi.apply("dev", "alaya")
+print(result) 
+# Output: devālaya (Rule 6.1.101 applied)
 ```
 
 ### 2. Derivation Simulation (Prakriya)

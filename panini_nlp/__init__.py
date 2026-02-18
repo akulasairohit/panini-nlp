@@ -13,7 +13,7 @@ Modules
 - gnn        : Optional GNN models (requires torch + torch_geometric)
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from panini_nlp.sandhi import SandhiEngine
 from panini_nlp.morphology import MorphologicalAnalyzer
